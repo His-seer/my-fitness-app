@@ -23,6 +23,9 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
+// Destructure appId from firebaseConfig here for easier access
+const { appId } = firebaseConfig;
+
 
 // --- Helper to get User ID ---
 const getUserId = () => auth.currentUser?.uid || 'anonymous_user';
@@ -69,6 +72,12 @@ const callGemini = async (prompt, schema = null) => {
     throw error;
   }
 };
+
+// Declare __initial_auth_token globally or pass it down as a prop if it's truly dynamic
+// For local development, if it's not provided by an environment, it will be undefined.
+// You might receive it from a build step or a global script in specific environments.
+// For now, declare it as a variable that could be undefined if not set.
+let __initial_auth_token = undefined; // Or retrieve from process.env if using a .env file
 
 // --- Main App Component ---
 /*
@@ -140,6 +149,7 @@ const Dashboard = ({ setView, userId }) => {
   useEffect(() => {
     if (!userId) return;
 
+    // Use the destructured appId here
     const dietQuery = query(collection(db, `artifacts/${appId}/users/${userId}/dietLogs`), where("date", "==", today));
     const unsubDiet = onSnapshot(dietQuery, (snapshot) => {
       if (!snapshot.empty) {
@@ -149,6 +159,7 @@ const Dashboard = ({ setView, userId }) => {
       }
     });
 
+    // Use the destructured appId here
     const workoutQuery = query(collection(db, `artifacts/${appId}/users/${userId}/workoutLogs`), where("date", "==", today));
     const unsubWorkout = onSnapshot(workoutQuery, (snapshot) => {
       if (!snapshot.empty) {
@@ -199,7 +210,7 @@ const Dashboard = ({ setView, userId }) => {
           </div>
           <div className="bg-gray-800 p-6 rounded-xl shadow-lg flex flex-col justify-between">
             <h2 className="text-2xl font-semibold mb-4 flex items-center"><Dumbbell className="mr-3 text-red-400"/>Today's Workout</h2>
-            {todayWorkout ? (<div className="text-center my-auto"><CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-2"/><p className="text-xl font-bold">Workout Complete!</p><p className="text-gray-400">Awesome job. Rest and recover.</p></div>) : (<div className="text-center my-auto"><Target className="w-16 h-16 text-red-500 mx-auto mb-2"/><p className="text-xl font-bold">Ready to Train</p><p className="text-gray-400">Time to build muscle. Let's go!</p></div>)}
+            {todayWorkout ? (<div className="text-center my-auto"><CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-2"/><p className="text-xl font-bold">Workout Complete!</p><p className="text-gray-400">Awesome job. Rest and recover.</p></div>) : (<div className="text-center my-auto"><Target className="w-16 h-16 text-red-500 mx-auto mb-2"/><p className="text-xl font-bold">Ready to Train</p><p className="text-400">Time to build muscle. Let's go!</p></div>)}
           </div>
         </div>
 
@@ -293,6 +304,7 @@ const WorkoutTracker = ({ setView }) => {
     }
     setIsSubmitting(true);
     try {
+      // Use the destructured appId here
       const docRef = doc(db, `artifacts/${appId}/users/${userId}/workoutLogs`, `${userId}_${today}`);
       await setDoc(docRef, { userId, date: today, createdAt: serverTimestamp(), exercises: workoutLog, workoutPlan: generatedWorkout }, { merge: true });
       setView('dashboard');
@@ -377,6 +389,7 @@ const DietTracker = ({ setView }) => {
 
   const fetchTodaysLog = useCallback(async () => {
     if (!userId) return;
+    // Use the destructured appId here
     const docRef = doc(db, `artifacts/${appId}/users/${userId}/dietLogs`, `${userId}_${today}`);
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
@@ -427,6 +440,7 @@ const DietTracker = ({ setView }) => {
     const totalProtein = updatedMeals.reduce((sum, meal) => sum + meal.protein, 0);
 
     try {
+      // Use the destructured appId here
       const docRef = doc(db, `artifacts/${appId}/users/${userId}/dietLogs`, `${userId}_${today}`);
       await setDoc(docRef, { userId, date: today, meals: updatedMeals, totalCalories, totalProtein, updatedAt: serverTimestamp() }, { merge: true });
       setMeals(updatedMeals);
@@ -441,6 +455,7 @@ const DietTracker = ({ setView }) => {
     const totalCalories = updatedMeals.reduce((sum, meal) => sum + meal.calories, 0);
     const totalProtein = updatedMeals.reduce((sum, meal) => sum + meal.protein, 0);
     try {
+      // Use the destructured appId here
       const docRef = doc(db, `artifacts/${appId}/users/${userId}/dietLogs`, `${userId}_${today}`);
       await setDoc(docRef, { userId, date: today, meals: updatedMeals, totalCalories, totalProtein, updatedAt: serverTimestamp() }, { merge: true });
       setMeals(updatedMeals);
@@ -495,6 +510,7 @@ const ProgressTracker = ({ setView }) => {
 
   useEffect(() => {
     if (!userId) return;
+    // Use the destructured appId here
     const progressQuery = query(collection(db, `artifacts/${appId}/users/${userId}/progress`));
     const unsubscribe = onSnapshot(progressQuery, (snapshot) => {
       const data = snapshot.docs.map(doc => ({...doc.data(), id: doc.id })).sort((a, b) => a.date.localeCompare(b.date));
@@ -508,6 +524,7 @@ const ProgressTracker = ({ setView }) => {
     if (!weight) return;
     try {
       const today = new Date().toISOString().split('T')[0];
+      // Use the destructured appId here
       await addDoc(collection(db, `artifacts/${appId}/users/${userId}/progress`), { userId, date: today, weight: parseFloat(weight), createdAt: serverTimestamp() });
       setWeight('');
     } catch (error) {
@@ -556,7 +573,7 @@ const ProgressTracker = ({ setView }) => {
 
         <div className="bg-gray-800 p-5 rounded-xl">
           <h3 className="text-xl font-semibold mb-4">Weight Journey</h3>
-          {progressData.length > 1 ? (<div style={{ width: '100%', height: 300 }}><ResponsiveContainer><LineChart data={progressData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}><CartesianGrid strokeDasharray="3 3" stroke="#4A5568" /><XAxis dataKey="date" stroke="#A0AEC0" tick={{ fontSize: 12 }} /><YAxis stroke="#A0AEC0" domain={['dataMin - 2', 'dataMax + 2']} tick={{ fontSize: 12 }} /><Tooltip contentStyle={{ backgroundColor: '#2D3748', border: 'none', borderRadius: '10px' }} labelStyle={{ color: '#E53E3E' }}/><Legend /><Line type="monotone" dataKey="weight" stroke="#E53E3E" strokeWidth={2} activeDot={{ r: 8 }} /></LineChart></ResponsiveContainer></div>) : (<p className="text-gray-500 text-center py-10">Log your weight at least twice to see a chart and get AI feedback.</p>)}
+          {progressData.length > 1 ? (<div style={{ width: '100%', height: 300 }}><ResponsiveContainer><LineChart data={progressData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}><CartesianGrid strokeDasharray="3 3" stroke="#4A5568" /><XAxis dataKey="date" stroke="#A0AEC0" tick={{ fontSize: 12 }} /><YAxis stroke="#A0AEC0" domain={['dataMin - 2', 'dataMax + 2']} tick={{ fontSize: 12 }} /><Tooltip contentStyle={{ backgroundColor: '#2D3748', border: 'none', borderRadius: '10px' }} labelStyle={{ color: '#E53E3E' }}/><Legend /><Line type="monotone" dataKey="weight" stroke="#E53E3E" strokeWidth={2} activeDot={{ r: 8 }} /></LineChart></ResponsiveContainer></div>) : (<p className="text-gray-500 text-center py-10">Log your weight at least twice to see your progress chart!</p>)}
         </div>
       </div>
   );
