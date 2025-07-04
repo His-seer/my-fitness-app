@@ -32,9 +32,8 @@ const getUserId = () => auth.currentUser?.uid || 'anonymous_user';
 
 // --- Gemini API Helper ---
 const callGemini = async (prompt, schema = null) => {
-  // In a real application, you should secure your API key.
-  // This key is left blank as it will be provided by the execution environment.
-  const apiKey = "";
+  
+  const apiKey = "AIzaSyCTjm2_op-C171gatkWLianfc0-8uX2a4A";
   const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
   const payload = {
