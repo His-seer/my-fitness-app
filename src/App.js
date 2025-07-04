@@ -8,13 +8,21 @@ import { ChevronLeft, Dumbbell, Utensils, TrendingUp, CheckCircle, Target, Info,
 // --- Firebase Configuration ---
 // NOTE: These variables are placeholders and will be provided by the environment.
 // In a local setup, you would replace these with your actual Firebase config.
-const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+const firebaseConfig = {
+  apiKey: "AIzaSyCjtUN3BvFoLryvO8Lj5lQlYP2kTqKdySU",
+  authDomain: "my-fitness-tracker-a8760.firebaseapp.com",
+  projectId: "my-fitness-tracker-a8760",
+  storageBucket: "my-fitness-tracker-a8760.firebasestorage.app",
+  messagingSenderId: "585707730478",
+  appId: "1:585707730478:web:e15e6743760be2a3d891bf",
+  measurementId: "G-F1BKLF7MMP"
+};
 
 // --- Firebase Initialization ---
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+const analytics = getAnalytics(app);
 
 // --- Helper to get User ID ---
 const getUserId = () => auth.currentUser?.uid || 'anonymous_user';
